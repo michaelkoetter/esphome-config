@@ -1,0 +1,19 @@
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  domain: !secret wifi_domain
+
+api:
+  password: !secret esphome_password
+
+ota:
+  password: !secret esphome_password
+
+logger:
+
+time:
+  - id: sntp_time
+    platform: sntp
+    servers: !secret ntp_servers
+    timezone: Europe/Berlin
+    

@@ -1,0 +1,72 @@
+<<: !include common.yaml
+
+esphome:
+  name: epaper42
+  platform: ESP32
+  board: esp32dev
+
+  on_boot:
+    - wait_until:
+        lambda: return id(sntp_time).now().is_valid();
+    - logger.log: Got NTP time.
+    - delay: 5s
+    - display.page.show: date_time
+    - component.update: epaper
+
+
+font:
+  - id: RobotoMono40
+    size: 40
+    file: "fonts/RobotoMono/RobotoMono-Regular.ttf"
+  - id: mdi40
+    size: 40
+    file: "fonts/MaterialIcons/MaterialIcons-Regular.ttf"
+    glyphs:
+      - "sync"
+      - "today"
+      - "access_time"
+
+spi:
+  clk_pin: SCK
+  mosi_pin: MOSI
+
+display:
+  - id: epaper
+    platform: waveshare_epaper
+    cs_pin: SS
+    dc_pin: 17
+    busy_pin: 4
+    reset_pin: 16
+    model: 4.20in
+    update_interval: 60s
+    pages:
+      - id: boot
+        lambda: |-
+          int ignore, mdi40_width = 0, mdi40_height = 0, roboto40_height = 0;
+          it.get_text_bounds(0, 0, "today", id(mdi40), TextAlign::TOP_LEFT, &ignore, &ignore, &mdi40_width, &mdi40_height);
+          it.get_text_bounds(0, 0, "ABC", id(RobotoMono40), TextAlign::TOP_LEFT, &ignore, &ignore, &ignore, &roboto40_height);
+          
+          int border     = 10,
+              boot_top   = border, 
+              boot_left  = 2 * border + mdi40_width;
+
+          it.print(border, boot_top + 8, id(mdi40), "sync");
+          it.print(boot_left, boot_top, id(RobotoMono40), "Connecting...");
+          
+      - id: date_time
+        lambda: |-
+          int ignore, mdi40_width = 0, mdi40_height = 0, roboto40_height = 0;
+          it.get_text_bounds(0, 0, "today", id(mdi40), TextAlign::TOP_LEFT, &ignore, &ignore, &mdi40_width, &mdi40_height);
+          it.get_text_bounds(0, 0, "ABC", id(RobotoMono40), TextAlign::TOP_LEFT, &ignore, &ignore, &ignore, &roboto40_height);
+          
+          int border     = 10,
+              date_top   = border, 
+              date_left  = 2 * border + mdi40_width,
+              time_top   = date_top + roboto40_height, 
+              time_left  = 2 * border + mdi40_width;
+          
+          it.print(border, date_top + 8, id(mdi40), "today");
+          it.print(border, time_top + 8, id(mdi40), "access_time");
+          it.strftime(date_left, date_top, id(RobotoMono40), "%d.%m.%Y", id(sntp_time).now());
+          it.strftime(time_left, time_top, id(RobotoMono40), "%H:%M", id(sntp_time).now());
+      
