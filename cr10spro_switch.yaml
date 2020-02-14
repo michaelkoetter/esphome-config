@@ -1,0 +1,28 @@
+<<: !include common.yaml
+
+esphome:
+  name: cr10spro_switch
+  platform: ESP8266
+  board: esp01_1m
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Toggle CR10S-Pro Power"
+    on_press:
+      - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    name: "CR10S-Pro Power"
+    pin: GPIO12
+    id: relay
+    restore_mode: ALWAYS_ON
+
+status_led:
+  pin:
+    number: GPIO13
+    inverted: yes
